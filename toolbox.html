@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>开发工具箱</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 2.8em;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            color: #6b7280;
+            margin-bottom: 20px;
+        }
+
+        .search-filter-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .search-box {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto 20px;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 15px 50px 15px 20px;
+            border: 2px solid #e5e7eb;
+            border-radius: 25px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+            font-size: 1.2em;
+        }
+
+        .filter-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .filter-tab {
+            padding: 8px 16px;
+            border: 2px solid transparent;
+            border-radius: 20px;
+            background: #f3f4f6;
+            color: #6b7280;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .filter-tab:hover {
+            background: #e5e7eb;
+        }
+
+        .filter-tab.active {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            border-color: transparent;
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        .tool-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            border-color: #4f46e5;
+        }
+
+        .tool-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .tool-title {
+            font-size: 1.4em;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 10px;
+        }
+
+        .tool-description {
+            color: #6b7280;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+
+        .tool-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .tool-category {
+            background: #f3f4f6;
+            color: #4b5563;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 500;
+        }
+
+        .tool-tags {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .tool-tag {
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 0.7em;
+            font-weight: 500;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #6b7280;
+            font-size: 1.1em;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #e5e7eb;
+            border-top: 3px solid #4f46e5;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6b7280;
+        }
+
+        .empty-state-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        .error-message {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .tools-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2.2em;
+            }
+            
+            .search-filter-section {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛠️ 开发工具箱</h1>
+            <p>集成开发过程中常用的小工具，提升工作效率</p>
+            <div class="stats">
+                <span id="toolCount">正在加载工具...</span>
+            </div>
+        </div>
+
+        <div class="search-filter-section">
+            <div class="search-box">
+                <input type="text" id="searchInput" class="search-input" placeholder="搜索工具名称、描述或标签...">
+                <span class="search-icon">🔍</span>
+            </div>
+            
+            <div class="filter-tabs" id="filterTabs">
+                <div class="filter-tab active" data-category="all">全部</div>
+            </div>
+        </div>
+
+        <div id="loadingSection" class="loading">
+            <div class="loading-spinner"></div>
+            正在扫描工具目录...
+        </div>
+
+        <div id="toolsGrid" class="tools-grid" style="display: none;">
+        </div>
+
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <div class="empty-state-icon">📭</div>
+            <h3>没有找到匹配的工具</h3>
+            <p>尝试调整搜索条件或选择其他分类</p>
+        </div>
+    </div>
+
+    <script>
+        class ToolBox {
+            constructor() {
+                this.tools = [];
+                this.filteredTools = [];
+                this.currentCategory = 'all';
+                this.searchTerm = '';
+                
+                this.initElements();
+                this.bindEvents();
+                this.loadTools();
+            }
+
+            initElements() {
+                this.toolsGrid = document.getElementById('toolsGrid');
+                this.loadingSection = document.getElementById('loadingSection');
+                this.emptyState = document.getElementById('emptyState');
+                this.searchInput = document.getElementById('searchInput');
+                this.filterTabs = document.getElementById('filterTabs');
+                this.toolCount = document.getElementById('toolCount');
+            }
+
+            bindEvents() {
+                this.searchInput.addEventListener('input', (e) => {
+                    this.searchTerm = e.target.value.toLowerCase();
+                    this.filterTools();
+                });
+
+                this.filterTabs.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('filter-tab')) {
+                        document.querySelectorAll('.filter-tab').forEach(tab => 
+                            tab.classList.remove('active'));
+                        e.target.classList.add('active');
+                        this.currentCategory = e.target.dataset.category;
+                        this.filterTools();
+                    }
+                });
+            }
+
+            async loadTools() {
+                try {
+                    // 模拟扫描tools目录
+                    const toolsData = await this.scanToolsDirectory();
+                    this.tools = toolsData;
+                    this.setupCategories();
+                    this.filterTools();
+                    this.updateStats();
+                    
+                    this.loadingSection.style.display = 'none';
+                    this.toolsGrid.style.display = 'grid';
+                } catch (error) {
+                    console.error('加载工具失败:', error);
+                    this.showError('加载工具失败，请刷新页面重试');
+                }
+            }
+
+            async scanToolsDirectory() {
+                // 由于浏览器安全限制，无法直接读取文件系统
+                // 这里使用预定义的工具列表，实际项目中可以通过后端API获取
+                const tools = [];
+                
+                // 尝试加载飞米工具的配置
+                try {
+                    const response = await fetch('./tools/feimi-value-analyzer.json');
+                    if (response.ok) {
+                        const toolConfig = await response.json();
+                        tools.push(toolConfig);
+                    }
+                } catch (error) {
+                    console.warn('无法加载工具配置:', error);
+                }
+                
+                // 如果没有找到配置文件，使用默认配置
+                if (tools.length === 0) {
+                    tools.push({
+                        name: "飞米积分价值观分析器",
+                        description: "基于事件文本智能匹配价值观准则，生成行为案例和推荐理由",
+                        category: "人力资源",
+                        tags: ["价值观", "积分", "分析", "AI"],
+                        icon: "🎯",
+                        version: "1.0.0",
+                        author: "Claude Code",
+                        filename: "feimi-value-analyzer.html"
+                    });
+                }
+                
+                return tools;
+            }
+
+            setupCategories() {
+                const categories = new Set(['all']);
+                this.tools.forEach(tool => {
+                    if (tool.category) {
+                        categories.add(tool.category);
+                    }
+                });
+
+                this.filterTabs.innerHTML = '';
+                categories.forEach(category => {
+                    const tab = document.createElement('div');
+                    tab.className = `filter-tab ${category === 'all' ? 'active' : ''}`;
+                    tab.dataset.category = category;
+                    tab.textContent = category === 'all' ? '全部' : category;
+                    this.filterTabs.appendChild(tab);
+                });
+            }
+
+            filterTools() {
+                this.filteredTools = this.tools.filter(tool => {
+                    const matchesCategory = this.currentCategory === 'all' || 
+                                          tool.category === this.currentCategory;
+                    
+                    const matchesSearch = !this.searchTerm || 
+                                        tool.name.toLowerCase().includes(this.searchTerm) ||
+                                        tool.description.toLowerCase().includes(this.searchTerm) ||
+                                        tool.tags.some(tag => tag.toLowerCase().includes(this.searchTerm));
+                    
+                    return matchesCategory && matchesSearch;
+                });
+
+                this.renderTools();
+            }
+
+            renderTools() {
+                if (this.filteredTools.length === 0) {
+                    this.toolsGrid.style.display = 'none';
+                    this.emptyState.style.display = 'block';
+                    return;
+                }
+
+                this.emptyState.style.display = 'none';
+                this.toolsGrid.style.display = 'grid';
+                
+                this.toolsGrid.innerHTML = this.filteredTools.map(tool => `
+                    <div class="tool-card" onclick="openTool('${tool.filename}')">
+                        <div class="tool-icon">${tool.icon}</div>
+                        <div class="tool-title">${tool.name}</div>
+                        <div class="tool-description">${tool.description}</div>
+                        <div class="tool-meta">
+                            <span class="tool-category">${tool.category}</span>
+                            <div class="tool-tags">
+                                ${tool.tags.map(tag => `<span class="tool-tag">${tag}</span>`).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            updateStats() {
+                this.toolCount.textContent = `共 ${this.tools.length} 个工具可用`;
+            }
+
+            showError(message) {
+                this.loadingSection.innerHTML = `
+                    <div class="error-message">
+                        <strong>错误：</strong> ${message}
+                    </div>
+                `;
+            }
+        }
+
+        function openTool(filename) {
+            window.open(`./tools/${filename}`, '_blank');
+        }
+
+        // 初始化工具箱
+        document.addEventListener('DOMContentLoaded', () => {
+            new ToolBox();
+        });
+    </script>
+</body>
+</html>
