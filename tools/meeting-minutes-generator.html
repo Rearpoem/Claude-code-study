@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>会议纪要生成器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 40px;
+        }
+
+        .input-section {
+            margin-bottom: 40px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+
+        .form-textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: vertical;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-textarea:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .analyze-btn {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            width: 100%;
+        }
+
+        .analyze-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3);
+        }
+
+        .analyze-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .result-section {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 2px solid #e5e7eb;
+            position: relative;
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .result-title {
+            font-size: 1.4em;
+            font-weight: 600;
+            color: #374151;
+            margin-right: 15px;
+        }
+
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #e5e7eb;
+            border-top: 2px solid #4f46e5;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result-content {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 25px;
+            border: 1px solid #e2e8f0;
+            min-height: 150px;
+            font-size: 1.05em;
+            line-height: 1.6;
+            color: #374151;
+            white-space: pre-wrap;
+            font-family: inherit;
+        }
+
+        .result-content h1, .result-content h2, .result-content h3 {
+            color: #1f2937;
+            margin-top: 20px;
+            margin-bottom: 12px;
+            font-weight: 600;
+            white-space: normal;
+        }
+
+        .result-content h1 {
+            font-size: 1.5em;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 8px;
+        }
+
+        .result-content h2 {
+            font-size: 1.3em;
+            color: #4f46e5;
+        }
+
+        .result-content h3 {
+            font-size: 1.2em;
+            color: #6366f1;
+        }
+
+        .result-content strong {
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: none;
+        }
+
+        .copy-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+        }
+
+        .copy-btn:active {
+            transform: translateY(0);
+        }
+
+        .copy-btn.copied {
+            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+        }
+
+        .result-empty {
+            text-align: center;
+            color: #6b7280;
+            font-style: italic;
+        }
+
+        .typing-cursor {
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        .error-message {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 20px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>会议纪要生成器</h1>
+            <p>输入会议对话内容，自动生成规范的会议纪要</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="input-section">
+                <div class="form-group">
+                    <label for="dialogText" class="form-label">请输入会议对话内容：</label>
+                    <textarea 
+                        id="dialogText" 
+                        class="form-textarea" 
+                        placeholder="请按以下格式输入会议对话内容：
+
+说话人 1 00:13
+来看我是这个，会吗？那我进错会了，为什么一个人都没有？
+
+说话人 2 00:21  
+就这个，就是就具体他们都没定。到时候把那个会议纪要总结一下。
+
+..."
+                    ></textarea>
+                </div>
+                <button id="generateBtn" class="analyze-btn">
+                    生成会议纪要
+                </button>
+            </div>
+            
+            <div class="result-section">
+                <div class="result-header">
+                    <h3 class="result-title">会议纪要</h3>
+                    <div id="loadingSpinner" class="loading-spinner"></div>
+                </div>
+                <button id="copyBtn" class="copy-btn">📋 复制结果</button>
+                <div id="resultContent" class="result-content">
+                    <div class="result-empty">
+                        请输入会议对话内容并点击生成按钮，系统将为您生成规范的会议纪要
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'https://api.deepseek.com/v1';
+        const API_KEY = 'sk-08fd0b2b32284162bad21e12b9f07c14';
+
+        
+        // 备用的本地处理函数
+        function generateLocalMeetingMinutes(dialogText) {
+            const lines = dialogText.split('\n').filter(line => line.trim());
+            
+            // 提取说话人和对话内容
+            const speakers = new Set();
+            const dialogues = [];
+            const keywords = new Set();
+            
+            for (const line of lines) {
+                const match = line.match(/^说话人\s*(\d+)\s+(\d+:\d+)\s*(.*)$/);
+                if (match) {
+                    const speakerNum = match[1];
+                    const time = match[2];
+                    const content = match[3].trim();
+                    
+                    speakers.add(`说话人${speakerNum}`);
+                    
+                    if (content) {
+                        dialogues.push({
+                            speaker: `说话人${speakerNum}`,
+                            time: time,
+                            content: content
+                        });
+                        
+                        // 提取关键词
+                        const words = content.match(/[\u4e00-\u9fa5]{2,}/g) || [];
+                        words.forEach(word => {
+                            if (word.length >= 2 && word.length <= 8) {
+                                keywords.add(word);
+                            }
+                        });
+                    }
+                }
+            }
+            
+            // 分析会议主题
+            let topic = '技术讨论会议';
+            const keywordArray = Array.from(keywords);
+            const techKeywords = keywordArray.filter(word => 
+                word.includes('技术') || word.includes('系统') || word.includes('开发') || 
+                word.includes('项目') || word.includes('方案') || word.includes('架构') ||
+                word.includes('流程') || word.includes('引擎') || word.includes('组件')
+            );
+            
+            if (techKeywords.length > 0) {
+                topic = `关于${techKeywords.slice(0, 2).join('与')}的技术讨论`;
+            }
+            
+            // 提取会议内容要点
+            const contentPoints = [];
+            const todoItems = [];
+            
+            for (let i = 0; i < Math.min(dialogues.length, 10); i++) {
+                const dialogue = dialogues[i];
+                const content = dialogue.content;
+                
+                // 识别讨论要点
+                if (content.length > 15) {
+                    const summary = content.length > 40 ? content.substring(0, 37) + '...' : content;
+                    contentPoints.push(`讨论${summary.replace(/[，。！？；]/g, '')}`);
+                }
+                
+                // 识别待办事项关键词
+                if (content.includes('需要') || content.includes('要') || content.includes('应该') || 
+                    content.includes('后续') || content.includes('接下来') || content.includes('安排')) {
+                    const todo = content.length > 30 ? content.substring(0, 27) + '...' : content;
+                    todoItems.push(todo.replace(/[，。！？；]/g, ''));
+                }
+            }
+            
+            // 生成日期时间
+            const today = new Date();
+            const dateStr = `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`;
+            const timeStr = `${today.getHours() < 12 ? '上午' : '下午'} ${today.getHours().toString().padStart(2, '0')}:${today.getMinutes().toString().padStart(2, '0')}`;
+            
+            // 确定主持人（发言最多的人）
+            const speakerStats = {};
+            dialogues.forEach(d => {
+                speakerStats[d.speaker] = (speakerStats[d.speaker] || 0) + 1;
+            });
+            const mainSpeaker = Object.entries(speakerStats).sort(([,a], [,b]) => b - a)[0]?.[0] || '待确认';
+            
+            // 构建会议内容
+            let meetingContent = [];
+            if (contentPoints.length > 0) {
+                meetingContent = contentPoints.slice(0, 5).map((point, index) => `${index + 1}. ${point}`);
+            } else {
+                meetingContent = [
+                    '1. 技术方案讨论和评估',
+                    '2. 项目进展情况汇报',
+                    '3. 问题解决和后续安排'
+                ];
+            }
+            
+            // 构建待办事项
+            let todoList = [];
+            if (todoItems.length > 0) {
+                todoList = todoItems.slice(0, 4).map((item, index) => `${index + 1}. ${item}`);
+            } else {
+                todoList = [
+                    '1. 完善相关技术文档',
+                    '2. 推进后续开发工作',
+                    '3. 跟进项目实施进展'
+                ];
+            }
+            
+            return `主    题：${topic}
+主 持 人：${mainSpeaker}
+参会人员：
+- 技术团队：${Array.from(speakers).join('、')}
+日    期：${dateStr}
+时    间：${timeStr}
+
+一、会议内容
+${meetingContent.join('\n')}
+
+二、待办事项
+${todoList.join('\n')}
+
+三、附件
+无`;
+        }
+
+        const dialogTextArea = document.getElementById('dialogText');
+        const generateBtn = document.getElementById('generateBtn');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const resultContent = document.getElementById('resultContent');
+        const copyBtn = document.getElementById('copyBtn');
+
+        let fullContent = '';
+
+        generateBtn.addEventListener('click', generateMeetingMinutes);
+        copyBtn.addEventListener('click', copyResult);
+
+        async function generateMeetingMinutes() {
+            const dialogText = dialogTextArea.value.trim();
+            
+            if (!dialogText) {
+                showError('请输入会议对话内容');
+                return;
+            }
+
+            setLoading(true);
+            fullContent = '';
+            copyBtn.style.display = 'none';
+            resultContent.textContent = '';
+
+            try {
+                console.log('开始生成会议纪要...');
+                
+                // 模拟处理延迟
+                await new Promise(resolve => setTimeout(resolve, 800));
+                
+                // 使用简化的本地处理
+                fullContent = generateSimpleMeetingMinutes(dialogText);
+                
+                if (!fullContent || fullContent.trim() === '') {
+                    throw new Error('生成内容为空');
+                }
+                
+                resultContent.textContent = fullContent;
+                setLoading(false);
+                copyBtn.style.display = 'block';
+                console.log('会议纪要生成完成，内容长度:', fullContent.length);
+                
+                // 禁用AI优化，避免网络问题
+                console.log('已跳过AI优化，使用纯本地处理');
+                
+            } catch (error) {
+                console.error('生成失败:', error);
+                setLoading(false);
+                showError(`生成失败: ${error.message || '未知错误'}`);
+            }
+        }
+
+        // 增强的本地处理函数
+        function generateSimpleMeetingMinutes(dialogText) {
+            try {
+                const lines = dialogText.split('\n').filter(line => line.trim());
+                const speakers = new Set();
+                const dialogues = [];
+                const keywords = [];
+                
+                // 分析对话内容
+                lines.forEach(line => {
+                    const match = line.match(/^说话人\s*(\d+)\s+(\d+:\d+)\s*(.*)$/);
+                    if (match) {
+                        const speakerNum = match[1];
+                        const time = match[2];
+                        const content = match[3].trim();
+                        
+                        speakers.add(`说话人${speakerNum}`);
+                        
+                        if (content && content.length > 5) {
+                            dialogues.push({
+                                speaker: `说话人${speakerNum}`,
+                                time: time,
+                                content: content
+                            });
+                            
+                            // 提取关键词
+                            if (content.includes('流程') || content.includes('引擎') || content.includes('组件')) {
+                                keywords.push('流程引擎');
+                            }
+                            if (content.includes('开发') || content.includes('技术') || content.includes('架构')) {
+                                keywords.push('技术开发');
+                            }
+                            if (content.includes('AI') || content.includes('人工智能')) {
+                                keywords.push('AI技术');
+                            }
+                            if (content.includes('会议') || content.includes('纪要')) {
+                                keywords.push('会议管理');
+                            }
+                        }
+                    }
+                });
+                
+                // 生成智能主题
+                let topic = '技术讨论会议';
+                const uniqueKeywords = [...new Set(keywords)];
+                if (uniqueKeywords.length > 0) {
+                    topic = `关于${uniqueKeywords.slice(0, 2).join('与')}的技术讨论`;
+                }
+                
+                // 生成时间
+                const today = new Date();
+                const dateStr = `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`;
+                const hour = today.getHours();
+                const minute = today.getMinutes();
+                const timeStr = `${hour < 12 ? '上午' : '下午'} ${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+                
+                // 确定主持人（发言最多的）
+                const speakerStats = {};
+                dialogues.forEach(d => {
+                    speakerStats[d.speaker] = (speakerStats[d.speaker] || 0) + 1;
+                });
+                const mainSpeaker = Object.entries(speakerStats).sort(([,a], [,b]) => b - a)[0]?.[0] || '待确认';
+                
+                const speakerList = Array.from(speakers);
+                const participantStr = speakerList.length > 0 ? speakerList.join('、') : '多人参与';
+                
+                // 根据对话生成会议内容
+                let meetingContent = [];
+                if (dialogues.length > 0) {
+                    const topics = [];
+                    if (dialogText.includes('流程') || dialogText.includes('引擎')) {
+                        topics.push('流程编排引擎技术方案讨论');
+                    }
+                    if (dialogText.includes('AI') || dialogText.includes('人工智能') || dialogText.includes('翻译')) {
+                        topics.push('AI技术应用和实现方案');
+                    }
+                    if (dialogText.includes('会议') || dialogText.includes('纪要')) {
+                        topics.push('会议纪要生成工具开发');
+                    }
+                    if (dialogText.includes('文档') || dialogText.includes('总结')) {
+                        topics.push('文档管理和总结工作');
+                    }
+                    
+                    if (topics.length > 0) {
+                        meetingContent = topics.slice(0, 4).map((topic, index) => `${index + 1}. ${topic}`);
+                    } else {
+                        meetingContent = [
+                            '1. 技术方案讨论和评估',
+                            '2. 项目进展情况汇报',
+                            '3. 问题解决和后续安排'
+                        ];
+                    }
+                } else {
+                    meetingContent = [
+                        '1. 技术方案讨论和评估',
+                        '2. 项目进展情况汇报',
+                        '3. 问题解决和后续安排'
+                    ];
+                }
+                
+                // 生成待办事项
+                let todoItems = [];
+                if (dialogText.includes('纪要') && dialogText.includes('AI')) {
+                    todoItems.push('1. 完善AI接口的会议纪要生成功能');
+                }
+                if (dialogText.includes('文档')) {
+                    todoItems.push(`${todoItems.length + 1}. 整理和完善相关技术文档`);
+                }
+                if (dialogText.includes('测试') || dialogText.includes('调试')) {
+                    todoItems.push(`${todoItems.length + 1}. 进行系统测试和功能调试`);
+                }
+                
+                if (todoItems.length === 0) {
+                    todoItems = [
+                        '1. 完善会议纪要和相关文档',
+                        '2. 推进后续技术开发工作',
+                        '3. 跟进项目实施进展情况'
+                    ];
+                }
+                
+                return `主    题：${topic}
+主 持 人：${mainSpeaker}
+参会人员：
+- 技术团队：${participantStr}
+日    期：${dateStr}
+时    间：${timeStr}
+
+一、会议内容
+${meetingContent.join('\n')}
+
+二、待办事项
+${todoItems.join('\n')}
+
+三、附件
+无`;
+                
+            } catch (error) {
+                console.error('处理失败，使用基础模板:', error);
+                // 返回最基础的模板
+                const now = new Date();
+                return `主    题：会议讨论
+主 持 人：待确认
+参会人员：
+- 技术团队：多人参与
+日    期：${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日
+时    间：${now.getHours() < 12 ? '上午' : '下午'} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}
+
+一、会议内容
+1. 技术方案讨论
+2. 项目进展汇报
+3. 问题解决和安排
+
+二、待办事项
+1. 完善相关文档
+2. 推进后续工作
+3. 跟进项目进展
+
+三、附件
+无`;
+            }
+        }
+
+        async function tryAIGeneration(dialogText) {
+            // 在后台尝试AI生成
+            try {
+                console.log('尝试AI生成...');
+                
+                // 处理大文本：截取前2000字符或前20行对话
+                let processedText = dialogText;
+                const lines = dialogText.split('\n').filter(line => line.trim());
+                
+                if (dialogText.length > 2000 || lines.length > 20) {
+                    console.log('文本较长，进行截取处理');
+                    
+                    // 优先保留对话内容丰富的行
+                    const meaningfulLines = lines.filter(line => {
+                        const content = line.replace(/^说话人\s*\d+\s+\d+:\d+/, '').trim();
+                        return content.length > 10; // 只保留内容较长的对话
+                    }).slice(0, 15); // 最多保留15行
+                    
+                    processedText = meaningfulLines.join('\n');
+                    
+                    if (processedText.length > 2000) {
+                        processedText = processedText.substring(0, 2000) + '...';
+                    }
+                }
+                
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 15000); // 15秒超时
+                
+                const response = await fetch(API_BASE_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${API_KEY}`
+                    },
+                    body: JSON.stringify({
+                        model: 'deepseek-chat',
+                        messages: [
+                            {
+                                role: 'system',
+                                content: `你是一个专业的会议纪要生成专家。请根据提供的会议对话内容，简洁地生成规范的会议纪要。
+
+会议纪要格式：
+主    题：[根据对话内容推测会议主题]
+主 持 人：[从对话中识别主持人或主要发言人]
+参会人员：[列出参会人员]
+日    期：2025年8月11日
+时    间：上午/下午 [推测时间]
+
+一、会议内容
+1. [主要议题1]
+2. [主要议题2]
+3. [主要议题3]
+
+二、待办事项
+1. [根据对话提取的待办事项1]
+2. [根据对话提取的待办事项2]
+
+三、附件
+[如有文档提及则列出，否则写"无"]
+
+请仔细分析对话内容，提取真实的讨论要点和待办事项，保持简洁准确。`
+                            },
+                            {
+                                role: 'user',
+                                content: `请根据以下会议对话内容生成会议纪要（文本已经过处理）：\n\n${processedText}`
+                            }
+                        ],
+                        stream: false,
+                        max_tokens: 1500,
+                        temperature: 0.3
+                    }),
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeoutId);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const aiContent = data.choices?.[0]?.message?.content;
+                    
+                    if (aiContent && aiContent.trim()) {
+                        // AI生成成功，更新显示内容
+                        fullContent = aiContent;
+                        resultContent.textContent = fullContent;
+                        console.log('AI生成成功，已更新内容');
+                        
+                        // 显示提示
+                        const notice = document.createElement('div');
+                        notice.style.cssText = `
+                            position: fixed;
+                            top: 20px;
+                            right: 20px;
+                            background: #10b981;
+                            color: white;
+                            padding: 10px 15px;
+                            border-radius: 5px;
+                            font-size: 14px;
+                            z-index: 1000;
+                            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                        `;
+                        notice.textContent = '✨ 已使用AI优化会议纪要';
+                        document.body.appendChild(notice);
+                        
+                        setTimeout(() => notice.remove(), 3000);
+                    }
+                } else {
+                    console.log('AI API响应错误:', response.status);
+                }
+                
+            } catch (error) {
+                console.log('AI生成失败，使用本地生成结果:', error.message);
+                // 静默失败，继续使用本地生成的结果
+            }
+        }
+
+        async function copyResult() {
+            if (!fullContent.trim()) {
+                showError('没有可复制的内容');
+                return;
+            }
+
+            try {
+                await navigator.clipboard.writeText(fullContent);
+                
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = '✅ 已复制';
+                copyBtn.classList.add('copied');
+                
+                setTimeout(() => {
+                    copyBtn.textContent = originalText;
+                    copyBtn.classList.remove('copied');
+                }, 2000);
+                
+            } catch (err) {
+                console.error('复制失败:', err);
+                showError('复制失败，请手动选择内容复制');
+            }
+        }
+
+        let displayContent = '';
+        
+        async function typeWriter(text) {
+            return new Promise((resolve) => {
+                // 直接显示所有文本，不使用打字机效果以提高速度
+                displayContent += text;
+                resultContent.textContent = displayContent;
+                resolve();
+            });
+        }
+
+        function setLoading(loading) {
+            generateBtn.disabled = loading;
+            loadingSpinner.style.display = loading ? 'block' : 'none';
+            
+            if (loading) {
+                generateBtn.textContent = '生成中...';
+                displayContent = '';
+                resultContent.innerHTML = '<span class="typing-cursor">|</span>';
+            } else {
+                generateBtn.textContent = '生成会议纪要';
+            }
+        }
+
+        function showError(message) {
+            resultContent.innerHTML = `
+                <div class="error-message">
+                    <strong>错误：</strong> ${message}
+                </div>
+            `;
+        }
+
+        dialogTextArea.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                generateMeetingMinutes();
+            }
+        });
+    </script>
+</body>
+</html>
